@@ -1,0 +1,7 @@
+import { Mail, Settings2, UserCircle2 } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import SectionReveal from '../components/SectionReveal';
+import { useAuth } from '../context/AuthContext';
+import { loadDemoState } from '../lib/demoData';
+
+export default function Profile(){const {profile}=useAuth();const state=loadDemoState(profile?.role==='admin');return <div><PageHeader eyebrow="PROFILE & SETTINGS" title="Your member identity." body="Keep account information and subscription preferences in one place."/><div className="container settings-grid"><SectionReveal><div className="panel glass-card"><div className="profile-avatar"><UserCircle2 size={30}/></div><h2>{profile?.full_name}</h2><p>{profile?.email}</p><div className="profile-meta"><span><Mail size={14}/> {profile?.email}</span><span><Settings2 size={14}/> Role: {profile?.role}</span></div></div></SectionReveal><SectionReveal delay={.08}><div className="panel glass-card"><span className="eyebrow">PLAN</span><h2>{state.subscription.plan==='monthly'?'Monthly member':'Annual member'}</h2><p>Current status: <strong>{state.subscription.status}</strong></p><div className="setting-line"><span>Renewal</span><strong>20 Oct 2026</strong></div><div className="setting-line"><span>Charity contribution</span><strong>{state.subscription.charity_percentage}%</strong></div><div className="setting-line"><span>Charity</span><strong>{state.charities.find(c=>c.id===state.subscription.charity_id)?.name}</strong></div></div></SectionReveal></div></div>}

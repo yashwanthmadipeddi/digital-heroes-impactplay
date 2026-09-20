@@ -1,0 +1,4 @@
+-- Optional post-migration seed. Replace UUIDs with real auth user IDs after signup.
+-- The four charities are already inserted in 001_init.sql.
+-- Example draw records can be created after the first admin user is promoted:
+-- update public.profiles set role='admin' where email='admin@impactplay-demo.com';
