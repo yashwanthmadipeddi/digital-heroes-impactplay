@@ -1,302 +1,125 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { UserProfile } from '../types';
-
-import {
-  isDemoMode,
-  supabase,
-} from '../lib/supabase';
-
-import {
-  signIn,
-  signUp,
-} from '../lib/services';
+import { isDemoMode, supabase } from '../lib/supabase';
+import { signIn, signUp } from '../lib/services';
+import { adminState, defaultState } from '../lib/demoData';
+import { clearDemoSession, getDemoSessionRole, startDemoSession, type DemoRole } from '../lib/demoSession';
 
 interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
-
-  login: (
-    email: string,
-    password: string
-  ) => Promise<UserProfile>;
-
-  register: (
-    name: string,
-    email: string,
-    password: string
-  ) => Promise<UserProfile>;
-
+  login: (email: string, password: string) => Promise<UserProfile>;
+  register: (name: string, email: string, password: string) => Promise<UserProfile>;
+  openDemo: (role: DemoRole) => Promise<UserProfile>;
   logout: () => Promise<void>;
 }
 
-const AuthContext =
-  createContext<AuthContextValue | null>(null);
-
-const STORAGE_KEY =
-  'impactplay-session';
-
+const AuthContext = createContext<AuthContextValue | null>(null);
+const STORAGE_KEY = 'impactplay-session';
 
 function readStoredProfile(): UserProfile | null {
   try {
-    const raw =
-      window.localStorage.getItem(
-        STORAGE_KEY
-      );
-
-    if (!raw) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as UserProfile;
+    if (!p?.id || !p?.email || !p?.full_name || !p?.role) {
+      localStorage.removeItem(STORAGE_KEY);
       return null;
     }
-
-    const parsed =
-      JSON.parse(raw) as UserProfile;
-
-    if (
-      !parsed?.id ||
-      !parsed?.email ||
-      !parsed?.full_name ||
-      !parsed?.role
-    ) {
-      window.localStorage.removeItem(
-        STORAGE_KEY
-      );
-
-      return null;
-    }
-
-    return parsed;
+    return p;
   } catch {
-    window.localStorage.removeItem(
-      STORAGE_KEY
-    );
-
+    localStorage.removeItem(STORAGE_KEY);
     return null;
   }
 }
 
+function readDemoProfile(): UserProfile | null {
+  const role = getDemoSessionRole();
+  if (!role) return null;
+  return role === 'admin' ? adminState.profile : defaultState.profile;
+}
 
-export function AuthProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [profile, setProfile] =
-    useState<UserProfile | null>(
-      () => readStoredProfile()
-    );
-
-  const [loading, setLoading] =
-    useState(false);
-
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [profile, setProfile] = useState<UserProfile | null>(() => readDemoProfile() ?? readStoredProfile());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isDemoMode || !supabase) {
-      return;
-    }
-
+    if (getDemoSessionRole() || isDemoMode || !supabase) return;
     const client = supabase;
-
     let mounted = true;
-
-
-    async function loadProfile(
-      userId: string
-    ) {
-      const {
-        data: profileData,
-      } = await client
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (!mounted) {
+    const loadProfile = async (userId: string) => {
+      const { data, error } = await client.from('profiles').select('*').eq('id', userId).single();
+      if (!mounted || error || !data) return;
+      setProfile(data as UserProfile);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    };
+    void client.auth.getSession().then(async ({ data }) => {
+      if (data.session && mounted && !getDemoSessionRole()) await loadProfile(data.session.user.id);
+    });
+    const { data: listener } = client.auth.onAuthStateChange(async (_event, session) => {
+      if (getDemoSessionRole()) return;
+      if (!session) {
+        setProfile(null);
+        localStorage.removeItem(STORAGE_KEY);
         return;
       }
-
-      setProfile(
-        (profileData as UserProfile) ||
-          null
-      );
-    }
-
-
-    client.auth
-      .getSession()
-      .then(async ({ data }) => {
-        if (
-          !data.session ||
-          !mounted
-        ) {
-          return;
-        }
-
-        await loadProfile(
-          data.session.user.id
-        );
-      });
-
-
-    const {
-      data: listener,
-    } =
-      client.auth.onAuthStateChange(
-        async (
-          _event,
-          session
-        ) => {
-          if (!session) {
-            setProfile(null);
-
-            window.localStorage.removeItem(
-              STORAGE_KEY
-            );
-
-            return;
-          }
-
-          await loadProfile(
-            session.user.id
-          );
-        }
-      );
-
-
+      await loadProfile(session.user.id);
+    });
     return () => {
       mounted = false;
-
       listener.subscription.unsubscribe();
     };
   }, []);
 
+  const value = useMemo<AuthContextValue>(() => ({
+    profile,
+    loading,
+    async login(email, password) {
+      setLoading(true);
+      try {
+        clearDemoSession();
+        const result = await signIn(email, password);
+        if (!result.profile) throw new Error('Profile not found.');
+        setProfile(result.profile);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(result.profile));
+        return result.profile;
+      } finally { setLoading(false); }
+    },
+    async register(name, email, password) {
+      setLoading(true);
+      try {
+        clearDemoSession();
+        const result = await signUp(name, email, password);
+        if (!result.profile) throw new Error('Account created. Confirm your email, then log in.');
+        setProfile(result.profile);
+        if (result.session) localStorage.setItem(STORAGE_KEY, JSON.stringify(result.profile));
+        return result.profile;
+      } finally { setLoading(false); }
+    },
+    async openDemo(role) {
+      setLoading(true);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        clearDemoSession();
+        startDemoSession(role);
+        const p = role === 'admin' ? adminState.profile : defaultState.profile;
+        setProfile(p);
+        return p;
+      } finally { setLoading(false); }
+    },
+    async logout() {
+      if (!getDemoSessionRole() && !isDemoMode && supabase) await supabase.auth.signOut();
+      clearDemoSession();
+      setProfile(null);
+      localStorage.removeItem(STORAGE_KEY);
+    },
+  }), [profile, loading]);
 
-  const value =
-    useMemo<AuthContextValue>(
-      () => ({
-        profile,
-        loading,
-
-
-        async login(
-          email,
-          password
-        ) {
-          setLoading(true);
-
-          try {
-            const result =
-              await signIn(
-                email,
-                password
-              );
-
-            if (!result.profile) {
-              throw new Error(
-                'Profile not found.'
-              );
-            }
-
-            setProfile(
-              result.profile
-            );
-
-            window.localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify(
-                result.profile
-              )
-            );
-
-            return result.profile;
-          } finally {
-            setLoading(false);
-          }
-        },
-
-
-        async register(
-          name,
-          email,
-          password
-        ) {
-          setLoading(true);
-
-          try {
-            const result =
-              await signUp(
-                name,
-                email,
-                password
-              );
-
-            if (!result.profile) {
-              throw new Error(
-                'Could not create profile.'
-              );
-            }
-
-            setProfile(
-              result.profile
-            );
-
-            window.localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify(
-                result.profile
-              )
-            );
-
-            return result.profile;
-          } finally {
-            setLoading(false);
-          }
-        },
-
-
-        async logout() {
-          if (
-            !isDemoMode &&
-            supabase
-          ) {
-            await supabase.auth.signOut();
-          }
-
-          setProfile(null);
-
-          window.localStorage.removeItem(
-            STORAGE_KEY
-          );
-        },
-      }),
-      [profile, loading]
-    );
-
-
-  return (
-    <AuthContext.Provider
-      value={value}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-
 export function useAuth() {
-  const value =
-    useContext(AuthContext);
-
-  if (!value) {
-    throw new Error(
-      'useAuth must be used inside AuthProvider'
-    );
-  }
-
+  const value = useContext(AuthContext);
+  if (!value) throw new Error('useAuth must be used inside AuthProvider');
   return value;
 }

@@ -16,17 +16,14 @@ const cricketPrograms = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { login, loading } = useAuth();
+  const { openDemo, loading } = useAuth();
   const [demoOpen, setDemoOpen] = useState(false);
 
   async function enterDemo(role: 'user' | 'admin') {
-    const credentials = role === 'admin'
-      ? { email: 'admin@impactplay-demo.com', password: 'Admin@1234' }
-      : { email: 'demo@impactplay-demo.com', password: 'Demo@1234' };
     try {
-      await login(credentials.email, credentials.password);
+      const p = await openDemo(role);
       setDemoOpen(false);
-      navigate(role === 'admin' ? '/admin' : '/dashboard');
+      navigate(p.role === 'admin' ? '/admin' : '/dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to open demo.');
     }
@@ -101,7 +98,7 @@ export default function Landing() {
           <button className="demo-access-card glass-card" onClick={() => enterDemo('user')} disabled={loading}><span className="demo-access-icon"><HeartHandshake size={20}/></span><div><strong>User Demo</strong><span>Match form · charity · draw · winnings</span></div><ArrowRight size={16}/></button>
           <button className="demo-access-card glass-card" onClick={() => enterDemo('admin')} disabled={loading}><span className="demo-access-icon orange"><Trophy size={20}/></span><div><strong>Admin Demo</strong><span>Users · draws · winners · reports</span></div><ArrowRight size={16}/></button>
         </div>
-        <div className="demo-credentials-inline"><span>User: demo@impactplay-demo.com / Demo@1234</span><span>Admin: admin@impactplay-demo.com / Admin@1234</span></div>
+        <div className="demo-credentials-inline"><span>Instant access · no credentials</span><span>Demo payment available inside the member flow</span></div>
       </motion.div>
     </div>}
   </div>;

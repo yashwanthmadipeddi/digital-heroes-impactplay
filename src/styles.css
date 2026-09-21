@@ -22,7 +22,7 @@
 .audience-points>div{display:grid;grid-template-columns:24px 1fr;column-gap:10px;row-gap:2px;padding:14px 15px;border-radius:17px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
 .audience-points svg{grid-row:1 / span 2;color:var(--lime);margin-top:2px}
 .audience-points strong{font-size:12px}.audience-points span{font-size:10px;color:#7f9089}
-.cricket-score-form{position:relative;overflow:hidden}
+.cricket-score-form{position:relative;overflow:visible}
 .cricket-score-form:before{content:"";position:absolute;inset:auto -90px -120px auto;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(197,226,137,.12),transparent 68%);pointer-events:none}
 .form-section-title{display:flex;align-items:center;gap:10px;padding-bottom:16px;margin-bottom:17px;border-bottom:1px solid rgba(255,255,255,.07)}
 .form-section-title svg{color:var(--lime)}.form-section-title strong{display:block;font-size:14px}.form-section-title span{display:block;color:#75877f;font-size:10px;margin-top:3px}
@@ -40,3 +40,204 @@
 @media(max-width:1000px){.score-form-grid{grid-template-columns:repeat(3,1fr)}.cricket-score-row{grid-template-columns:140px 1fr 48px 1fr auto}.feature-strip{grid-template-columns:1fr 1fr}.audience-card{grid-template-columns:1fr}}
 @media(max-width:700px){.score-form-grid{grid-template-columns:1fr 1fr}.feature-strip{grid-template-columns:1fr}.cricket-score-row{grid-template-columns:1fr 52px auto}.cricket-score-row .score-bar{grid-column:2/4}.cricket-score-row .score-rank{display:none}.dashboard-tip{margin-bottom:70px}.audience-card{padding:22px}.audience-points{margin-top:8px}}
 @media(max-width:460px){.score-form-grid{grid-template-columns:1fr}.form-score-preview{min-height:74px}.cricket-score-row{grid-template-columns:1fr auto}.cricket-score-row .score-bar{grid-column:1/-1}.cricket-score-row .icon-btn{grid-column:2;grid-row:1}}
+
+
+/* =========================================================
+   IMPACTPLAY CUSTOM RESULT DROPDOWN
+   ========================================================= */
+
+.impact-custom-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  z-index: 30;
+}
+
+.impact-custom-select-trigger {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #f4f8f5;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.impact-custom-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(197, 226, 137, 0.25);
+}
+
+.impact-custom-select-trigger:focus-visible,
+.impact-custom-select-trigger.is-open {
+  border-color: rgba(197, 226, 137, 0.45);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 3px rgba(197, 226, 137, 0.07), 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.impact-select-chevron {
+  flex-shrink: 0;
+  color: #8da096;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.impact-custom-select-trigger:hover .impact-select-chevron,
+.impact-custom-select-trigger.is-open .impact-select-chevron {
+  color: var(--lime);
+}
+
+.impact-select-chevron.rotate {
+  transform: rotate(180deg);
+}
+
+.impact-custom-select-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  padding: 6px;
+  border: 1px solid rgba(197, 226, 137, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(22, 39, 44, 0.98), rgba(12, 27, 32, 0.99));
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: impactDropdownIn 0.14s ease-out;
+}
+
+.impact-custom-select-option {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #dce7e0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.impact-custom-select-option:hover,
+.impact-custom-select-option:focus-visible {
+  background: rgba(197, 226, 137, 0.10);
+  color: #ffffff;
+  outline: none;
+}
+
+.impact-custom-select-option.selected {
+  background: rgba(197, 226, 137, 0.16);
+  color: #c5e289;
+}
+
+.impact-custom-select-option.selected:hover,
+.impact-custom-select-option.selected:focus-visible {
+  background: rgba(197, 226, 137, 0.22);
+  color: #d9f2a6;
+}
+
+.impact-custom-select-option svg {
+  flex-shrink: 0;
+  color: var(--lime);
+}
+
+@keyframes impactDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 460px) {
+  .impact-custom-select-menu {
+    top: calc(100% + 6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impact-custom-select-menu {
+    animation: none;
+  }
+
+  .impact-custom-select-trigger,
+  .impact-select-chevron,
+  .impact-custom-select-option {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   IMPACTPLAY MOCK CHECKOUT
+   ========================================================= */
+.mock-checkout-page{min-height:100vh;padding-bottom:100px}
+.mock-checkout-grid{display:grid;grid-template-columns:.86fr 1.14fr;gap:16px;align-items:start}
+.mock-order-card,.mock-payment-card,.mock-payment-success{border-radius:28px;padding:28px}
+.mock-gateway-brand{display:flex;align-items:center;gap:12px}
+.mock-gateway-brand>div{display:grid;gap:2px}
+.mock-gateway-brand strong{font-size:16px}
+.mock-gateway-brand span:not(.brand-mark){color:#74867f;font-size:10px}
+.mock-order-summary{margin-top:70px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07)}
+.mock-order-summary h2{font:700 30px "Manrope";letter-spacing:-.04em;margin:12px 0 8px}
+.mock-order-summary>strong{display:inline-block;font:800 52px "Manrope";letter-spacing:-.06em;margin-right:8px}
+.mock-order-summary>span:last-child{color:#73857e;font-size:11px}
+.mock-checkout-benefits{display:grid;gap:12px;margin-top:40px}
+.mock-checkout-benefits span{display:flex;align-items:center;gap:8px;color:#aebbb5;font-size:11px}
+.mock-checkout-benefits svg{color:var(--lime)}
+.mock-card-heading{display:flex;align-items:flex-start;justify-content:space-between}
+.mock-card-heading h2{font:700 27px "Manrope";letter-spacing:-.04em;margin:8px 0 0}
+.demo-payment-banner{display:flex;align-items:center;gap:8px;margin:20px 0;padding:11px 13px;border-radius:13px;border:1px solid rgba(197,226,137,.12);background:rgba(197,226,137,.06);color:#9eae9f;font-size:10px}
+.demo-payment-banner svg{color:var(--lime)}
+.mock-form-stack{display:grid;gap:14px}
+.mock-form-stack label,.mock-form-row label{display:grid;gap:7px;color:#95a69f;font-size:10px;font-weight:800}
+.mock-form-stack input,.mock-form-row input{width:100%;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);color:var(--text);border-radius:12px;padding:12px 13px;outline:none}
+.mock-form-stack input:focus,.mock-form-row input:focus{border-color:rgba(197,226,137,.38);box-shadow:0 0 0 3px rgba(197,226,137,.06)}
+.mock-form-stack small{color:#667871;font-size:9px;font-weight:500}
+.mock-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mock-back-link{display:inline-flex;justify-content:center;align-items:center;gap:7px;color:#7e9189;font-size:11px;margin-top:2px}
+.mock-back-link:hover{color:var(--lime)}
+.mock-payment-success{width:min(760px,100%);margin:90px auto 0;text-align:center;padding:45px}
+.mock-success-icon{width:74px;height:74px;margin:0 auto 20px;display:grid;place-items:center;border-radius:24px;color:#0b180f;background:linear-gradient(135deg,#c7e78c,#9ac86d);box-shadow:0 18px 45px rgba(154,200,109,.2)}
+.mock-payment-success h1{font:800 clamp(34px,5vw,52px)/1.02 "Manrope";letter-spacing:-.055em;margin:14px auto;max-width:650px}
+.mock-payment-success>p{color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto}
+.mock-success-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:30px 0;text-align:left}
+.mock-success-grid>div{padding:15px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.025)}
+.mock-success-grid span{display:block;color:#657770;font-size:9px;letter-spacing:.12em;margin-bottom:7px}
+.mock-success-grid strong{display:block;color:#dfe8e2;font-size:12px;overflow-wrap:anywhere}
+.payment-success-text{color:var(--lime)!important}
+.mock-success-note{display:flex;justify-content:center;align-items:center;gap:8px;color:#81918a;font-size:10px}
+.mock-success-note svg{color:var(--lime)}
+@media(max-width:900px){.mock-checkout-grid{grid-template-columns:1fr}.mock-order-summary{margin-top:35px}}
+@media(max-width:600px){.mock-order-card,.mock-payment-card,.mock-payment-success{padding:21px}.mock-order-summary>strong{font-size:42px}.mock-form-row,.mock-success-grid{grid-template-columns:1fr}.mock-payment-success{margin-top:40px}}
+
+/* Keep custom cricket result dropdown above form content */
+.cricket-score-form{overflow:visible}
